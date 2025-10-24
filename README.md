@@ -11,6 +11,7 @@ An end-to-end data engineering and machine learning system that ingests NBA game
 ## Architecture
 
 ### System Design
+> **Note:** For best viewing experience, view this README in GitHub's light mode.
 ```mermaid
 ---
 config:
