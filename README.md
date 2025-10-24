@@ -15,8 +15,6 @@ An end-to-end data engineering and machine learning system that ingests NBA game
 ---
 config:
   layout: elk
-  theme: mc
-  look: neo
 ---
 flowchart LR
  subgraph sources["Data Sources"]
