@@ -1,0 +1,82 @@
+# Python
+venv/
+env/
+ENV/
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+dist/
+build/
+*.egg
+
+# Environment variables
+.env
+*.env
+!.env.example
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*.sublime-project
+*.sublime-workspace
+
+# Airflow
+airflow.db
+airflow.cfg
+airflow-webserver.pid
+logs/
+standalone_admin_password.txt
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+pgdata/
+
+# Jupyter Notebooks
+.ipynb_checkpoints/
+notebooks/.ipynb_checkpoints/
+
+# Secrets and credentials
+secrets/
+*.pem
+*.key
+credentials.json
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Testing
+.pytest_cache/
+htmlcov/
+.coverage
+.coverage.*
+*.cover
+.hypothesis/
+
+# Docker
+*.log
+
+# Data files (don't commit large datasets)
+data/raw/
+data/processed/
+*.csv
+*.parquet
+*.pkl
+
+# Model artifacts (these get large)
+models/*.pkl
+models/*.joblib
+*.h5
+*.pth
+
+# Documentation builds
+docs/_build/
+site/
