@@ -14,7 +14,7 @@ An end-to-end data engineering and machine learning system that ingests NBA game
 ```mermaid
 ---
 config:
-  layout: elk
+  layout: dagre
 ---
 flowchart LR
  subgraph sources["Data Sources"]
