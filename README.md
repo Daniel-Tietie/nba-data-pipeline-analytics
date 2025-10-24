@@ -1,6 +1,7 @@
 # NBA Data Pipeline & Prediction System
 
 > 🚧 **Work in Progress** - Building a production-grade ML pipeline for NBA game predictions
+> > **Note:** For best viewing experience, view this README in GitHub's light mode.
 
 ## Overview
 
