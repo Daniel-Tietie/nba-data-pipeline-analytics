@@ -11,67 +11,7 @@ An end-to-end data engineering and machine learning system that ingests NBA game
 ## Architecture
 
 ### System Design
-```mermaid
----
-config:
-  layout: elk
-  theme: mc
-  look: neo
----
-flowchart LR
- subgraph sources["Data Sources"]
-        API["NBA Stats API"]
-        WEB["Web Scraping"]
-  end
- subgraph ingestion["Ingestion Pipeline"]
-        INGEST["Airflow DAG<br>Daily 6AM"]
-  end
- subgraph storage1["PostgreSQL Database"]
-        RAW[("Raw Data")]
-  end
- subgraph processing["Data Processing Pipeline"]
-        ETL["Airflow DAG<br>Daily 7AM"]
-        FEAT["Feature<br>Engineering"]
-  end
- subgraph storage2["PostgreSQL Database"]
-        CLEAN[("Clean Data")]
-        FEATURES[("Feature Store")]
-        PREDS[("Predictions")]
-  end
- subgraph ml["ML Pipeline"]
-        TRAIN["Airflow DAG<br>Daily 8AM"]
-        MODELS["XGBoost<br>Random Forest<br>Logistic Regression"]
-  end
- subgraph serving["Application Layer"]
-        API_LAYER["FastAPI<br>REST API"]
-        UI["Streamlit<br>Dashboard"]
-  end
-    API --> INGEST
-    WEB --> INGEST
-    INGEST --> RAW
-    RAW --> ETL
-    ETL --> FEAT
-    FEAT --> CLEAN & FEATURES
-    FEATURES --> TRAIN
-    TRAIN --> MODELS
-    MODELS --> PREDS
-    PREDS --> API_LAYER
-    API_LAYER --> UI
-    style API fill:#81C784,stroke:#333,stroke-width:2px
-    style WEB fill:#81C784,stroke:#333,stroke-width:2px
-    style INGEST fill:#64B5F6,stroke:#333,stroke-width:2px
-    style RAW fill:#90A4AE,stroke:#333,stroke-width:2px
-    style ETL fill:#64B5F6,stroke:#333,stroke-width:2px
-    style FEAT fill:#EEEEEE,stroke:#333,stroke-width:2px
-    style CLEAN fill:#90A4AE,stroke:#333,stroke-width:2px
-    style FEATURES fill:#90A4AE,stroke:#333,stroke-width:2px
-    style PREDS fill:#90A4AE,stroke:#333,stroke-width:2px
-    style TRAIN fill:#64B5F6,stroke:#333,stroke-width:2px
-    style MODELS fill:#FFB74D,stroke:#333,stroke-width:2px
-    style API_LAYER fill:#BA68C8,stroke:#333,stroke-width:2px
-    style UI fill:#BA68C8,stroke:#333,stroke-width:2px
-
-```
+![NBA Data & ML Pipeline Architecture](images/NBA%20Data%20%26%20ML%20Pipeline%20Architecture.png)
 
 ### Data Flow
 
