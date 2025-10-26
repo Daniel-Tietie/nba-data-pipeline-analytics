@@ -11,7 +11,7 @@ An end-to-end data engineering and machine learning system that ingests NBA game
 
 ## Architecture
 
-### System Design
+### Data & ML Pipeline Architecture
 
 ![NBA Data & ML Pipeline Architecture](images/NBA%20Data%20%26%20ML%20Pipeline%20Architecture.png)
 
