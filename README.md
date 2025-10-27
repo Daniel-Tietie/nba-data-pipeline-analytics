@@ -63,8 +63,8 @@ An end-to-end data engineering and machine learning system that ingests NBA game
 
 - [x] Project architecture and design
 - [x] Development environment setup
-- [ ] Database schema design
-- [ ] Data ingestion pipeline
+- [x] Database schema design
+- [x] Data ingestion pipeline
 - [ ] ETL and feature engineering
 - [ ] Airflow DAG implementation
 - [ ] ML training pipeline
