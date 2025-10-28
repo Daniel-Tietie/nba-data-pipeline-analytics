@@ -35,6 +35,23 @@ An end-to-end data engineering and machine learning system that ingests NBA game
 | **DevOps** | Docker, Docker Compose |
 | **Testing** | pytest |
 
+## Data Quality & Cleaning
+
+This project maintains high data quality standards through systematic validation and cleaning processes.
+
+**Data Cleaning Performed:**
+- Removed 15 games (0.4%) involving invalid team IDs from NBA API
+- Filtered out non-NBA team records (All-Star/exhibition games)
+- Validated all 3,691 games have complete scores and valid team references
+
+**Final Dataset:**
+- 3,691 NBA regular season games (2021-2024)
+- 30 official NBA teams
+- 99.6% data completeness
+- Zero missing or invalid records
+
+For detailed data cleaning documentation, see [`docs/DATA_CLEANING.md`](docs/DATA_CLEANING.md).
+
 ## Features (Planned)
 
 ### Backend Pipeline
