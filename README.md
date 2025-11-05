@@ -29,7 +29,7 @@ An end-to-end data engineering and machine learning system that ingests NBA game
 |----------|-------------|
 | **Orchestration** | Apache Airflow |
 | **Data Storage** | PostgreSQL |
-| **ML/Analytics** | scikit-learn, XGBoost, pandas, numpy |
+| **ML/Analytics** | scikit-learn(XGBoost, Random Forest and Logisitic Regression), pandas, numpy |
 | **API** | FastAPI, WebSockets |
 | **Visualization** | Streamlit, Plotly |
 | **DevOps** | Docker, Docker Compose |
