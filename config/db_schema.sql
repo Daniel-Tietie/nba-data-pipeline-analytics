@@ -1,14 +1,20 @@
 -- ============================================
--- NBA Data Pipeline - Database Schema
+-- NBA Analytics Platform - Database Schema
+-- Fresh install only. DO NOT run against an
+-- existing database; use migrations instead.
 -- ============================================
 
--- Drop existing tables (for clean setup)
+-- Drop all tables in reverse dependency order
+DROP TABLE IF EXISTS personal_stats CASCADE;
+DROP TABLE IF EXISTS playoff_upsets CASCADE;
+DROP TABLE IF EXISTS mvp_season_profiles CASCADE;
+DROP TABLE IF EXISTS mvp_winners CASCADE;
+DROP TABLE IF EXISTS player_shooting_zones CASCADE;
+DROP TABLE IF EXISTS raw_shot_zone_splits CASCADE;
+DROP TABLE IF EXISTS raw_player_season_stats CASCADE;
+DROP TABLE IF EXISTS raw_season_standings CASCADE;
 DROP TABLE IF EXISTS data_quality_checks CASCADE;
 DROP TABLE IF EXISTS dag_runs CASCADE;
-DROP TABLE IF EXISTS model_metrics CASCADE;
-DROP TABLE IF EXISTS predictions CASCADE;
-DROP TABLE IF EXISTS features CASCADE;
-DROP TABLE IF EXISTS models CASCADE;
 DROP TABLE IF EXISTS team_stats CASCADE;
 DROP TABLE IF EXISTS games CASCADE;
 DROP TABLE IF EXISTS teams CASCADE;
@@ -76,6 +82,66 @@ CREATE TABLE raw_player_stats (
 CREATE INDEX idx_raw_player_stats_player ON raw_player_stats(player_id);
 CREATE INDEX idx_raw_player_stats_game ON raw_player_stats(game_id);
 
+CREATE TABLE raw_season_standings (
+    id SERIAL PRIMARY KEY,
+    season VARCHAR(10) NOT NULL,
+    team_id INTEGER NOT NULL,
+    conference VARCHAR(10),
+    conference_rank INTEGER,
+    wins INTEGER,
+    losses INTEGER,
+    win_pct DECIMAL(5,3),
+    games_back DECIMAL(5,1),
+    raw_data JSONB,
+    ingested_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(season, team_id)
+);
+
+CREATE INDEX idx_raw_standings_season ON raw_season_standings(season);
+
+CREATE TABLE raw_player_season_stats (
+    id SERIAL PRIMARY KEY,
+    player_id INTEGER NOT NULL,
+    player_name VARCHAR(100),
+    season VARCHAR(10) NOT NULL,
+    team_id INTEGER,
+    games_played INTEGER,
+    points_per_game DECIMAL(5,1),
+    rebounds_per_game DECIMAL(5,1),
+    assists_per_game DECIMAL(5,1),
+    steals_per_game DECIMAL(4,2),
+    blocks_per_game DECIMAL(4,2),
+    fg_pct DECIMAL(5,3),
+    three_pt_pct DECIMAL(5,3),
+    ft_pct DECIMAL(5,3),
+    minutes_per_game DECIMAL(5,1),
+    player_efficiency_rating DECIMAL(5,2),
+    win_shares DECIMAL(6,2),
+    raw_data JSONB,
+    ingested_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(player_id, season)
+);
+
+CREATE INDEX idx_raw_player_season_stats_player ON raw_player_season_stats(player_id);
+CREATE INDEX idx_raw_player_season_stats_season ON raw_player_season_stats(season);
+
+CREATE TABLE raw_shot_zone_splits (
+    id SERIAL PRIMARY KEY,
+    player_id INTEGER NOT NULL,
+    player_name VARCHAR(100),
+    season VARCHAR(10) NOT NULL,
+    zone VARCHAR(50) NOT NULL,
+    fga INTEGER,
+    fgm INTEGER,
+    fg_pct DECIMAL(5,3),
+    raw_data JSONB,
+    ingested_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(player_id, season, zone)
+);
+
+CREATE INDEX idx_raw_shot_zones_player ON raw_shot_zone_splits(player_id);
+CREATE INDEX idx_raw_shot_zones_season ON raw_shot_zone_splits(season);
+
 -- ============================================
 -- PROCESSED LAYER - Clean Data
 -- ============================================
@@ -142,93 +208,78 @@ CREATE INDEX idx_team_stats_team ON team_stats(team_id);
 CREATE INDEX idx_team_stats_date ON team_stats(stat_date);
 
 -- ============================================
--- ML LAYER - Features and Predictions
+-- ANALYTICS LAYER
 -- ============================================
 
-CREATE TABLE models (
-    model_id SERIAL PRIMARY KEY,
-    model_name VARCHAR(100) NOT NULL,
-    model_version VARCHAR(50) NOT NULL,
-    model_type VARCHAR(50),
-    hyperparameters JSONB,
-    training_date TIMESTAMP NOT NULL,
-    training_samples INTEGER,
-    is_active BOOLEAN DEFAULT FALSE,
+CREATE TABLE player_shooting_zones (
+    id SERIAL PRIMARY KEY,
+    player_id INTEGER NOT NULL,
+    player_name VARCHAR(100),
+    season VARCHAR(10) NOT NULL,
+    zone VARCHAR(50) NOT NULL,
+    fga INTEGER,
+    fgm INTEGER,
+    fg_pct DECIMAL(5,3),
+    zone_frequency DECIMAL(5,3),
+    processed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(player_id, season, zone)
+);
+
+CREATE INDEX idx_shooting_zones_player ON player_shooting_zones(player_id);
+CREATE INDEX idx_shooting_zones_season ON player_shooting_zones(season);
+
+CREATE TABLE mvp_winners (
+    id SERIAL PRIMARY KEY,
+    season VARCHAR(10) NOT NULL UNIQUE,
+    player_id INTEGER NOT NULL,
+    player_name VARCHAR(100) NOT NULL,
+    team_id INTEGER REFERENCES teams(team_id),
+    team_abbr VARCHAR(10)
+);
+
+CREATE TABLE mvp_season_profiles (
+    id SERIAL PRIMARY KEY,
+    season VARCHAR(10) NOT NULL,
+    player_id INTEGER NOT NULL,
+    player_name VARCHAR(100),
+    points_per_game DECIMAL(5,1),
+    rebounds_per_game DECIMAL(5,1),
+    assists_per_game DECIMAL(5,1),
+    fg_pct DECIMAL(5,3),
+    three_pt_pct DECIMAL(5,3),
+    player_efficiency_rating DECIMAL(5,2),
+    win_shares DECIMAL(6,2),
+    team_wins INTEGER,
+    team_seed INTEGER,
+    processed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(season, player_id)
+);
+
+CREATE INDEX idx_mvp_profiles_season ON mvp_season_profiles(season);
+
+CREATE TABLE playoff_upsets (
+    id SERIAL PRIMARY KEY,
+    season VARCHAR(10) NOT NULL,
+    round VARCHAR(30) NOT NULL,
+    higher_seed_team_id INTEGER REFERENCES teams(team_id),
+    higher_seed_rank INTEGER,
+    lower_seed_team_id INTEGER REFERENCES teams(team_id),
+    lower_seed_rank INTEGER,
+    series_result VARCHAR(10),
+    upset_margin INTEGER,
+    processed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(season, round, higher_seed_team_id, lower_seed_team_id)
+);
+
+CREATE INDEX idx_playoff_upsets_season ON playoff_upsets(season);
+
+CREATE TABLE personal_stats (
+    id SERIAL PRIMARY KEY,
+    stat_name VARCHAR(100) NOT NULL UNIQUE,
+    stat_value TEXT,
     notes TEXT,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    UNIQUE(model_name, model_version)
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
-
-CREATE TABLE features (
-    feature_id SERIAL PRIMARY KEY,
-    game_id VARCHAR(50) REFERENCES games(game_id),
-    home_team_win_pct DECIMAL(5,3),
-    away_team_win_pct DECIMAL(5,3),
-    home_team_last_5_wins INTEGER,
-    away_team_last_5_wins INTEGER,
-    h2h_home_wins INTEGER,
-    h2h_away_wins INTEGER,
-    h2h_total_games INTEGER,
-    home_team_days_rest INTEGER,
-    away_team_days_rest INTEGER,
-    home_team_avg_points DECIMAL(5,1),
-    away_team_avg_points DECIMAL(5,1),
-    home_team_avg_opp_points DECIMAL(5,1),
-    away_team_avg_opp_points DECIMAL(5,1),
-    home_team_point_diff DECIMAL(5,1),
-    away_team_point_diff DECIMAL(5,1),
-    home_team_fg_pct DECIMAL(5,3),
-    away_team_fg_pct DECIMAL(5,3),
-    home_team_three_pt_pct DECIMAL(5,3),
-    away_team_three_pt_pct DECIMAL(5,3),
-    is_back_to_back_home BOOLEAN,
-    is_back_to_back_away BOOLEAN,
-    home_team_won BOOLEAN,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-
-CREATE INDEX idx_features_game ON features(game_id);
-
-CREATE TABLE predictions (
-    prediction_id SERIAL PRIMARY KEY,
-    game_id VARCHAR(50) REFERENCES games(game_id),
-    model_id INTEGER REFERENCES models(model_id),
-    predicted_winner_id INTEGER REFERENCES teams(team_id),
-    predicted_winner_name VARCHAR(100),
-    win_probability DECIMAL(5,3),
-    predicted_margin DECIMAL(5,1),
-    actual_winner_id INTEGER REFERENCES teams(team_id),
-    was_correct BOOLEAN,
-    prediction_date TIMESTAMP NOT NULL,
-    game_date DATE NOT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    UNIQUE(game_id, model_id)
-);
-
-CREATE INDEX idx_predictions_game ON predictions(game_id);
-CREATE INDEX idx_predictions_model ON predictions(model_id);
-CREATE INDEX idx_predictions_date ON predictions(game_date);
-
-CREATE TABLE model_metrics (
-    metric_id SERIAL PRIMARY KEY,
-    model_id INTEGER REFERENCES models(model_id),
-    evaluation_date DATE NOT NULL,
-    evaluation_period VARCHAR(50),
-    total_predictions INTEGER,
-    correct_predictions INTEGER,
-    accuracy DECIMAL(5,3),
-    precision_score DECIMAL(5,3),
-    recall_score DECIMAL(5,3),
-    f1_score DECIMAL(5,3),
-    roc_auc DECIMAL(5,3),
-    avg_confidence DECIMAL(5,3),
-    calibration_score DECIMAL(5,3),
-    notes TEXT,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-
-CREATE INDEX idx_metrics_model ON model_metrics(model_id);
-CREATE INDEX idx_metrics_date ON model_metrics(evaluation_date);
 
 -- ============================================
 -- MONITORING LAYER - Pipeline Health
@@ -302,3 +353,19 @@ INSERT INTO teams (team_id, team_name, team_abbr, city, conference, division) VA
 (1610612761, 'Toronto Raptors', 'TOR', 'Toronto', 'East', 'Atlantic'),
 (1610612762, 'Utah Jazz', 'UTA', 'Utah', 'West', 'Northwest'),
 (1610612764, 'Washington Wizards', 'WAS', 'Washington', 'East', 'Southeast');
+
+-- ============================================
+-- SEED DATA - MVP Winners (last 10 seasons)
+-- ============================================
+
+INSERT INTO mvp_winners (season, player_id, player_name, team_abbr) VALUES
+('2015-16', 201939, 'Stephen Curry', 'GSW'),
+('2016-17', 201142, 'Russell Westbrook', 'OKC'),
+('2017-18', 203076, 'James Harden', 'HOU'),
+('2018-19', 2544,   'LeBron James', 'LAL'),
+('2019-20', 203954, 'Giannis Antetokounmpo', 'MIL'),
+('2020-21', 203954, 'Giannis Antetokounmpo', 'MIL'),
+('2021-22', 203999, 'Nikola Jokic', 'DEN'),
+('2022-23', 203999, 'Nikola Jokic', 'DEN'),
+('2023-24', 1629029, 'Shai Gilgeous-Alexander', 'OKC'),
+('2024-25', 1629029, 'Shai Gilgeous-Alexander', 'OKC');
