@@ -80,3 +80,6 @@ models/*.joblib
 # Documentation builds
 docs/_build/
 site/
+
+# Local project status (private, not for repo)
+PROJECT_STATUS.md
