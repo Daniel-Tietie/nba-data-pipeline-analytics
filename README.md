@@ -2,7 +2,7 @@
 
 An end-to-end data engineering project that ingests NBA game and player data, processes it through a layered PostgreSQL pipeline orchestrated by Apache Airflow, and serves three analytical modules through an interactive Streamlit dashboard.
 
-**Goal:** Demonstrate production-level data engineering skills — pipeline orchestration, layered data modeling, and data quality validation — for data engineering and analytics roles.
+**Goal:** Demonstrate production-level data engineering skills -- pipeline orchestration, layered data modeling, and data quality validation -- for data engineering and analytics roles.
 
 ## Overview
 
@@ -14,10 +14,10 @@ This project answers three specific basketball questions using real NBA data rat
 
 ## Data Flow
 
-1. **Ingestion** — collect game data, team stats, player season stats, shot zone splits, and standings from the NBA Stats API
-2. **Processing** — validate, clean, and load into a layered PostgreSQL schema (raw → processed → analytics)
-3. **Analytics ETL** — transform processed data into the three module-specific outputs
-4. **Serving** — a Streamlit dashboard reads directly from the analytics layer and renders interactive Plotly visualizations
+1. **Ingestion** -- collect game data, team stats, player season stats, shot zone splits, and standings from the NBA Stats API
+2. **Processing** -- validate, clean, and load into a layered PostgreSQL schema (raw → processed → analytics)
+3. **Analytics ETL** -- transform processed data into the three module-specific outputs
+4. **Serving** -- a Streamlit dashboard reads directly from the analytics layer and renders interactive Plotly visualizations
 
 ## Tech Stack
 
@@ -33,13 +33,13 @@ This project answers three specific basketball questions using real NBA data rat
 ## Analytics Modules
 
 ### 1. Player Shooting Zone Analysis
-Compares shot distribution and efficiency across court zones (restricted area, paint, mid-range, corner three, above-the-break three) for any player and season — for example, Stephen Curry's reliance on above-the-break threes versus drives to the basket, compared against other players.
+Compares shot distribution and efficiency across court zones (restricted area, paint, mid-range, corner three, above-the-break three) for any player and season -- for example, Stephen Curry's reliance on above-the-break threes versus drives to the basket, compared against other players.
 
 ### 2. Playoff Upset Tracking
 Identifies #1 seeds eliminated in the first round of the playoffs using historical seeding and series results, to see how often the league's best regular-season teams fail to convert in the postseason.
 
 ### 3. MVP Profile Analysis
-Tracks the statistical profile of MVP winners across the last ten seasons — scoring, rebounding, assists, shooting efficiency, team win percentage — to surface what statistical patterns tend to produce an MVP.
+Tracks the statistical profile of MVP winners across the last ten seasons -- scoring, rebounding, assists, shooting efficiency, team win percentage -- to surface what statistical patterns tend to produce an MVP.
 
 A personal stats module is planned as a fourth addition once my own game data is digitized.
 
@@ -58,7 +58,7 @@ For detailed data cleaning documentation, see [`docs/DATA_CLEANING.md`](docs/DAT
 
 - [x] Database schema design (layered raw → processed → analytics architecture)
 - [x] Historical game ingestion (3,691 games across 3 seasons)
-- [x] Schema pivot — removed ML scope, added analytics tables and migration path
+- [x] Schema pivot -- removed ML scope, added analytics tables and migration path
 - [ ] Ingestion scripts for standings, player season stats, shot zone splits
 - [ ] Analytics ETL for the three modules
 - [ ] Airflow DAG orchestration
