@@ -1,27 +1,23 @@
-# NBA Data Pipeline & Prediction System
+# NBA Analytics Platform
 
-> 🚧 **Work in Progress** - Building a production-grade ML pipeline for NBA game predictions
+An end-to-end data engineering project that ingests NBA game and player data, processes it through a layered PostgreSQL pipeline orchestrated by Apache Airflow, and serves three analytical modules through an interactive Streamlit dashboard.
 
+**Goal:** Demonstrate production-level data engineering skills — pipeline orchestration, layered data modeling, and data quality validation — for data engineering and analytics roles.
 
 ## Overview
 
-An end-to-end data engineering and machine learning system that ingests NBA game data, processes it through Apache Airflow, trains predictive models, and serves predictions through an interactive dashboard.
+This project answers three specific basketball questions using real NBA data rather than building generic predictive models:
 
-**Goal:** Demonstrate production-level data engineering and ML skills for landing data/ML engineering roles.
+1. How does a player's shot distribution and efficiency vary across court zones, compared to other players?
+2. How often does the NBA's #1 seed get eliminated in the first round of the playoffs, and by whom?
+3. What statistical profile tends to produce an MVP, across the last ten seasons?
 
-## Architecture
+## Data Flow
 
-### Data & ML Pipeline Architecture
-
-![NBA Data & ML Pipeline Architecture](images/NBA%20Data%20%26%20ML%20Pipeline%20Architecture.png)
-
-### Data Flow
-
-1. **Ingestion (Daily 6 AM):** Collect game schedules, scores, player stats, team metrics from NBA API
-2. **ETL (Daily 7 AM):** Validate data quality, clean, transform, engineer features (rolling averages, head-to-head, home/away splits)
-3. **ML Training (Weekly):** Train and evaluate multiple models, select best performer, store in model registry
-4. **Prediction (Daily 8 AM):** Generate predictions for today's games with confidence scores
-5. **Serving (Real-time):** API and dashboard provide access to predictions and analytics
+1. **Ingestion** — collect game data, team stats, player season stats, shot zone splits, and standings from the NBA Stats API
+2. **Processing** — validate, clean, and load into a layered PostgreSQL schema (raw → processed → analytics)
+3. **Analytics ETL** — transform processed data into the three module-specific outputs
+4. **Serving** — a Streamlit dashboard reads directly from the analytics layer and renders interactive Plotly visualizations
 
 ## Tech Stack
 
@@ -29,68 +25,46 @@ An end-to-end data engineering and machine learning system that ingests NBA game
 |----------|-------------|
 | **Orchestration** | Apache Airflow |
 | **Data Storage** | PostgreSQL |
-| **ML/Analytics** | scikit-learn(XGBoost, Random Forest and Logisitic Regression), pandas, numpy |
-| **API** | FastAPI, WebSockets |
+| **Data Processing** | Python, pandas |
 | **Visualization** | Streamlit, Plotly |
 | **DevOps** | Docker, Docker Compose |
 | **Testing** | pytest |
 
+## Analytics Modules
+
+### 1. Player Shooting Zone Analysis
+Compares shot distribution and efficiency across court zones (restricted area, paint, mid-range, corner three, above-the-break three) for any player and season — for example, Stephen Curry's reliance on above-the-break threes versus drives to the basket, compared against other players.
+
+### 2. Playoff Upset Tracking
+Identifies #1 seeds eliminated in the first round of the playoffs using historical seeding and series results, to see how often the league's best regular-season teams fail to convert in the postseason.
+
+### 3. MVP Profile Analysis
+Tracks the statistical profile of MVP winners across the last ten seasons — scoring, rebounding, assists, shooting efficiency, team win percentage — to surface what statistical patterns tend to produce an MVP.
+
+A personal stats module is planned as a fourth addition once my own game data is digitized.
+
 ## Data Quality & Cleaning
 
-This project maintains high data quality standards through systematic validation and cleaning processes.
-
-**Data Cleaning Performed:**
-- Removed 15 games (0.4%) involving invalid team IDs from NBA API
-- Filtered out non-NBA team records (All-Star/exhibition games)
-- Validated all 3,691 games have complete scores and valid team references
+This project maintains data quality standards through systematic validation and documented cleaning decisions.
 
 **Final Dataset:**
-- 3,691 NBA regular season games (2021-2024)
+- 3,691 NBA regular season games (2021–2024)
 - 30 official NBA teams
-- 99.6% data completeness
-- Zero missing or invalid records
+- No missing data/records since it is directly from NBA API
 
 For detailed data cleaning documentation, see [`docs/DATA_CLEANING.md`](docs/DATA_CLEANING.md).
 
-## Features (Planned)
-
-### Backend Pipeline
-- ✅ Automated daily data ingestion
-- ✅ Data quality validation and monitoring
-- ✅ Feature engineering pipeline
-- ✅ Multi-model training and comparison
-- ✅ Prediction generation with confidence scores
-
-### Interactive Dashboard
-- 📊 Live game predictions for today's matchups
-- 📈 Model performance analytics and trends
-- 🔍 Team comparison and matchup analysis
-- ⚙️ Pipeline health monitoring
-- 📜 Historical predictions browser
-
-### API Endpoints
-- `GET /predictions/today` - Today's game predictions
-- `GET /predictions/history` - Historical predictions with filters
-- `GET /models/performance` - Model accuracy metrics
-- `GET /teams/{team_id}/stats` - Team statistics
-- `GET /pipeline/status` - DAG run status and health
-- `WS /ws/live-updates` - Real-time prediction updates
-
 ## Project Status
 
-- [x] Project architecture and design
-- [x] Development environment setup
-- [x] Database schema design
-- [x] Data ingestion pipeline
-- [ ] ETL and feature engineering
-- [ ] Airflow DAG implementation
-- [ ] ML training pipeline
-- [ ] Model evaluation and selection
-- [ ] REST API development
-- [ ] Interactive dashboard
-- [ ] Testing and validation
+- [x] Database schema design (layered raw → processed → analytics architecture)
+- [x] Historical game ingestion (3,691 games across 3 seasons)
+- [x] Schema pivot — removed ML scope, added analytics tables and migration path
+- [ ] Ingestion scripts for standings, player season stats, shot zone splits
+- [ ] Analytics ETL for the three modules
+- [ ] Airflow DAG orchestration
+- [ ] Streamlit dashboard
 - [ ] Docker containerization
-- [ ] Documentation and demo
+- [ ] Personal stats module
 
 ## Local Development Setup
 
@@ -116,56 +90,27 @@ pip install -r requirements.txt
 cp .env.example .env
 # Edit .env with your database credentials
 
-# Set up database
+# Set up database (fresh install)
 createdb nba_pipeline
 psql -d nba_pipeline -f config/db_schema.sql
 
-# More detailed setup instructions coming as project develops...
+# If you already have data ingested, run the migration instead of the
+# fresh schema file — see config/migrations/
+psql -d nba_pipeline -f config/migrations/002_pivot_to_analytics.sql
 ```
+
+See [`PROJECT_STATUS.md`](PROJECT_STATUS.md) for the current state of the project and what's being worked on next.
 
 ## Project Structure
 ```
-nba-data-pipeline-analytics/
+nba-analytics-platform/
 ├── dags/                   # Airflow DAGs
 ├── src/
 │   ├── ingestion/         # Data collection modules
-│   ├── etl/               # Data transformation
-│   ├── models/            # ML training and prediction
-│   ├── api/               # FastAPI application
+│   ├── etl/               # Data transformation and analytics ETL
 │   └── dashboard/         # Streamlit UI
 ├── tests/                 # Unit and integration tests
-├── config/                # Configuration files
-├── docs/                  # Documentation and architecture
+├── config/                # Schema, migrations, configuration
+├── docs/                  # Documentation
 └── notebooks/             # Exploratory analysis
 ```
-
-## Why This Project?
-
-This project demonstrates:
-- **Data Engineering:** Building production pipelines with proper orchestration
-- **ML Engineering:** End-to-end model development, training, and deployment
-- **Software Engineering:** Clean code, testing, documentation, version control
-- **System Design:** Scalable architecture with separation of concerns
-- **DevOps:** Containerization and deployment best practices
-
-## Future Enhancements
-
-- Real-time game updates during live games
-- Advanced models (neural networks, ensemble methods)
-- Player prop predictions (points, rebounds, assists)
-- Betting odds integration and value analysis
-- Kubernetes deployment for cloud scalability
-- CI/CD pipeline with GitHub Actions
-
-## License
-
-MIT License - See LICENSE file for details
-
-## Contact
-
-**Daniel Tietie**  
-GitHub: [@Daniel-Tietie](https://github.com/Daniel-Tietie)
-
----
-
-*Last updated: October 24, 2025*
