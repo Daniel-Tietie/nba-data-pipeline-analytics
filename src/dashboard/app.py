@@ -30,6 +30,7 @@ st.markdown(f"""
 @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@500;600&display=swap');
 .stApp {{ background-color: {BG}; }}
 .block-container {{ padding-top: 1.2rem; max-width: 1180px; }}
+.js-plotly-plot, .plotly, .main-svg {{ touch-action: pan-y !important; }}
 html, body, [class*="css"] {{ font-family: 'Inter', sans-serif; }}
 h1, h2, h3 {{ font-family: 'Space Grotesk', sans-serif !important; color: {INK} !important; }}
 .stat-num {{ font-family: 'IBM Plex Mono', monospace; font-weight: 600; }}
@@ -76,6 +77,17 @@ st.caption(
     "It will be refined and connected to the real Airflow/Postgres pipeline once ingestion and "
     "analytics ETL are complete — see PROJECT_STATUS.md."
 )
+
+def show_chart(fig):
+    """Render a Plotly figure with touch-drag interactions disabled, so
+    accidental finger contact while scrolling on mobile doesn't trigger
+    zoom/pan/select on the chart."""
+    fig.update_layout(dragmode=False)
+    st.plotly_chart(
+        fig, use_container_width=True,
+        config={"scrollZoom": False, "displayModeBar": False, "doubleClick": False},
+    )
+
 
 tab1, tab2, tab3 = st.tabs(["Shooting Zones", "Playoff Upsets", "MVP Profiles"])
 
@@ -186,7 +198,7 @@ with tab1:
         """, unsafe_allow_html=True)
 
     with col_court:
-        st.plotly_chart(draw_half_court(zones), use_container_width=True)
+        show_chart(draw_half_court(zones))
         st.caption("Bubble size = share of shot attempts · color = field goal % (blue low → orange high)")
 
     st.markdown("#### Zone efficiency vs. league average")
@@ -198,7 +210,7 @@ with tab1:
         margin=dict(l=10, r=10, t=10, b=10), font=dict(color=INK, family="Inter"),
         yaxis=dict(title="FG%", gridcolor="#EEE"), legend=dict(orientation="h", y=1.1),
     )
-    st.plotly_chart(fig, use_container_width=True)
+    show_chart(fig)
 
 
 # ================= TAB 2: PLAYOFF UPSETS =================
@@ -249,7 +261,7 @@ with tab2:
                        margin=dict(l=10, r=10, t=30, b=10), font=dict(color=INK, family="Inter"),
                        yaxis=dict(title="Upset rate (%)", gridcolor="#EEE"))
     st.markdown("#### Upset rate by conference")
-    st.plotly_chart(fig, use_container_width=True)
+    show_chart(fig)
 
 
 # ================= TAB 3: MVP PROFILES =================
@@ -300,7 +312,7 @@ with tab3:
             paper_bgcolor=PAPER, height=360, margin=dict(l=30, r=30, t=20, b=20),
             legend=dict(orientation="h", y=-0.1), font=dict(family="Inter", color=INK),
         )
-        st.plotly_chart(fig, use_container_width=True)
+        show_chart(fig)
         st.caption("Last 3 MVP seasons, stats normalized 0-100 for comparison.")
 
     st.markdown("#### Team win rate vs. scoring, last 10 MVP seasons")
@@ -315,7 +327,7 @@ with tab3:
         xaxis=dict(title="Points per game", gridcolor="#EEE"),
         yaxis=dict(title="Team win rate (%)", gridcolor="#EEE"),
     )
-    st.plotly_chart(fig2, use_container_width=True)
+    show_chart(fig2)
 
 st.divider()
 st.caption(
