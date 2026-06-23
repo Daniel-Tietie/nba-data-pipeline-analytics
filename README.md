@@ -1,10 +1,14 @@
 # NBA Analytics Platform
 
+------
 ### Live demo (mock/draft build)
 
 [https://daniel-tietie-nba-data-pipeline-analytics-dashboard.streamlit.app/](https://daniel-tietie-nba-data-pipeline-analytics-dashboard.streamlit.app/)
 
-**Note:** this is a mock/draft dashboard running on hand-crafted sample data, not the real pipeline. Player headshots and team logos are real, but the surrounding stats are illustrative placeholders meant to preview the three analytics modules end to end. It will be rebuilt on top of the live Airflow/Postgres pipeline once ingestion and analytics ETL are complete.
+
+**Note:** this is a mock/draft dashboard running on hand-crafted sample data, not the real pipeline data. Player headshots and team logos are real, but the surrounding stats are illustrative placeholders meant to preview the three analytics modules end to end. It will be updated on top of the live Airflow/Postgres pipeline once ingestion and analytics ETL are complete.
+
+--------------------------------
 
 An end-to-end data engineering project that ingests NBA game and player data, processes it through a layered PostgreSQL pipeline orchestrated by Apache Airflow, and serves three analytical modules through an interactive Streamlit dashboard.
 
