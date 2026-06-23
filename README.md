@@ -1,5 +1,4 @@
 # NBA Analytics Platform
-
 ------
 ### Live demo (mock/draft build)
 
