@@ -1,5 +1,11 @@
 # NBA Analytics Platform
 
+### Live demo (mock/draft build)
+
+[https://daniel-tietie-nba-data-pipeline-analytics-dashboard.streamlit.app/](https://daniel-tietie-nba-data-pipeline-analytics-dashboard.streamlit.app/)
+
+**Note:** this is a mock/draft dashboard running on hand-crafted sample data, not the real pipeline. Player headshots and team logos are real, but the surrounding stats are illustrative placeholders meant to preview the three analytics modules end to end. It will be rebuilt on top of the live Airflow/Postgres pipeline once ingestion and analytics ETL are complete.
+
 An end-to-end data engineering project that ingests NBA game and player data, processes it through a layered PostgreSQL pipeline orchestrated by Apache Airflow, and serves three analytical modules through an interactive Streamlit dashboard.
 
 **Goal:** Demonstrate production-level data engineering skills -- pipeline orchestration, layered data modeling, and data quality validation -- for data engineering and analytics roles.
@@ -43,6 +49,12 @@ Tracks the statistical profile of MVP winners across the last ten seasons -- sco
 
 A personal stats module is planned as a fourth addition once my own game data is digitized.
 
+### Screenshots (mock/draft build)
+
+![Player Shooting Zone Analysis](src/dashboard/screenshots/shooting_zones.png)
+![Playoff Upset Tracking](src/dashboard/screenshots/playoff_upset.png)
+![MVP Profile Analysis](src/dashboard/screenshots/mvp_profiles.png)
+
 ## Data Quality & Cleaning
 
 This project maintains data quality standards through systematic validation and documented cleaning decisions.
@@ -62,7 +74,7 @@ For detailed data cleaning documentation, see [`docs/DATA_CLEANING.md`](docs/DAT
 - [ ] Ingestion scripts for standings, player season stats, shot zone splits
 - [ ] Analytics ETL for the three modules
 - [ ] Airflow DAG orchestration
-- [ ] Streamlit dashboard
+- [x] Streamlit dashboard (mock/draft build on sample data -- live pipeline integration pending)
 - [ ] Docker containerization
 - [ ] Personal stats module
 
