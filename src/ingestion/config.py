@@ -12,7 +12,7 @@ SEASON_START_DATE = datetime(2024, 10, 22)  # NBA season typically starts late O
 SEASON_END_DATE = datetime(2025, 4, 13)     # Regular season ends mid-April
 
 # API rate limiting
-API_DELAY_SECONDS = 0.6  # Wait between API calls to avoid rate limits
+API_DELAY_SECONDS = 1.5  # Wait between API calls to avoid rate limits
 
 # Data fetching parameters
 DAYS_TO_FETCH_BACK = 7   # How many days back to fetch when updating
