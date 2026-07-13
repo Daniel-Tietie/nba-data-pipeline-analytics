@@ -106,6 +106,47 @@ This ensures only one stat record per team per date, keeping the record with the
 
 ---
 
+## Issue 3: Incorrect Player/Team IDs in mvp_winners Seed Data
+
+**Discovered:** July 13, 2026
+**Severity:** High (would have silently pulled the wrong player's stats for 6 of 10 seasons)
+
+### Problem Description
+
+The hand-written `mvp_winners` seed data had wrong `player_id` values for six
+of the ten seasons. Some pointed at a real but incorrect player (2016-17,
+2017-18, 2018-19, 2019-20 all resolved to the wrong person), and 2022-23 named
+the wrong winner outright (Jokic instead of Embiid). 2023-24 and 2024-25 were
+both mapped to Shai Gilgeous-Alexander's 2024-25 ID, one season off.
+
+### Investigation
+
+Cross-checked each seed row's `player_name` against the live
+`leaguedashplayerstats` response for that season, matching on
+accent-normalized name (`unicodedata.normalize("NFKD", ...)`) rather than
+trusting the hardcoded `player_id`.
+
+### Resolution
+
+**Action Taken:**
+1. Resolved the correct `player_id`, `team_id`, and `team_abbr` for all 10
+   seasons directly from the stats API.
+2. Reseeded `mvp_winners` and cleared/repopulated `raw_player_season_stats`
+   with the corrected IDs.
+3. Updated `config/db_schema.sql` and `config/migrations/002_pivot_to_analytics.sql`
+   to match, so a fresh install seeds correctly instead of reproducing the bug.
+
+**Impact:**
+- Before: 6 of 10 MVP seasons pointed at the wrong player's stats.
+- After: all 10 verified against the live API by name match.
+
+### Prevention
+
+Any future hardcoded ID seed data for this project should be resolved from
+the API by name at write time, not typed from memory.
+
+---
+
 ## Data Quality Metrics (Post-Cleaning)
 
 | Metric | Value | Status |
@@ -138,4 +179,4 @@ This ensures only one stat record per team per date, keeping the record with the
 
 ---
 
-*Last Updated: October 27, 2025*
+*Last Updated: July 13, 2026*
