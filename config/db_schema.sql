@@ -11,6 +11,7 @@ DROP TABLE IF EXISTS mvp_season_profiles CASCADE;
 DROP TABLE IF EXISTS mvp_winners CASCADE;
 DROP TABLE IF EXISTS player_shooting_zones CASCADE;
 DROP TABLE IF EXISTS raw_shot_zone_splits CASCADE;
+DROP TABLE IF EXISTS raw_playoff_games CASCADE;
 DROP TABLE IF EXISTS raw_player_season_stats CASCADE;
 DROP TABLE IF EXISTS raw_season_standings CASCADE;
 DROP TABLE IF EXISTS data_quality_checks CASCADE;
@@ -141,6 +142,24 @@ CREATE TABLE raw_shot_zone_splits (
 
 CREATE INDEX idx_raw_shot_zones_player ON raw_shot_zone_splits(player_id);
 CREATE INDEX idx_raw_shot_zones_season ON raw_shot_zone_splits(season);
+
+CREATE TABLE raw_playoff_games (
+    id SERIAL PRIMARY KEY,
+    game_id VARCHAR(50) NOT NULL,
+    season VARCHAR(10) NOT NULL,
+    game_date DATE NOT NULL,
+    team_id INTEGER NOT NULL,
+    opponent_team_id INTEGER,
+    matchup VARCHAR(20),
+    win_loss VARCHAR(1),
+    pts INTEGER,
+    raw_data JSONB,
+    ingested_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(game_id, team_id)
+);
+
+CREATE INDEX idx_raw_playoff_games_season ON raw_playoff_games(season);
+CREATE INDEX idx_raw_playoff_games_team ON raw_playoff_games(team_id);
 
 -- ============================================
 -- PROCESSED LAYER - Clean Data
@@ -358,14 +377,14 @@ INSERT INTO teams (team_id, team_name, team_abbr, city, conference, division) VA
 -- SEED DATA - MVP Winners (last 10 seasons)
 -- ============================================
 
-INSERT INTO mvp_winners (season, player_id, player_name, team_abbr) VALUES
-('2015-16', 201939, 'Stephen Curry', 'GSW'),
-('2016-17', 201142, 'Russell Westbrook', 'OKC'),
-('2017-18', 203076, 'James Harden', 'HOU'),
-('2018-19', 2544,   'LeBron James', 'LAL'),
-('2019-20', 203954, 'Giannis Antetokounmpo', 'MIL'),
-('2020-21', 203954, 'Giannis Antetokounmpo', 'MIL'),
-('2021-22', 203999, 'Nikola Jokic', 'DEN'),
-('2022-23', 203999, 'Nikola Jokic', 'DEN'),
-('2023-24', 1629029, 'Shai Gilgeous-Alexander', 'OKC'),
-('2024-25', 1629029, 'Shai Gilgeous-Alexander', 'OKC');
+INSERT INTO mvp_winners (season, player_id, player_name, team_id, team_abbr) VALUES
+('2015-16', 201939,  'Stephen Curry',            1610612744, 'GSW'),
+('2016-17', 201566,  'Russell Westbrook',         1610612760, 'OKC'),
+('2017-18', 201935,  'James Harden',              1610612745, 'HOU'),
+('2018-19', 203507,  'Giannis Antetokounmpo',     1610612749, 'MIL'),
+('2019-20', 203507,  'Giannis Antetokounmpo',     1610612749, 'MIL'),
+('2020-21', 203999,  'Nikola Jokic',              1610612743, 'DEN'),
+('2021-22', 203999,  'Nikola Jokic',              1610612743, 'DEN'),
+('2022-23', 203954,  'Joel Embiid',               1610612755, 'PHI'),
+('2023-24', 203999,  'Nikola Jokic',              1610612743, 'DEN'),
+('2024-25', 1628983, 'Shai Gilgeous-Alexander',   1610612760, 'OKC');
