@@ -108,17 +108,17 @@ CREATE TABLE IF NOT EXISTS mvp_winners (
     team_abbr VARCHAR(10)
 );
 
-INSERT INTO mvp_winners (season, player_id, player_name, team_abbr) VALUES
-('2015-16', 201939,  'Stephen Curry',            'GSW'),
-('2016-17', 201142,  'Russell Westbrook',         'OKC'),
-('2017-18', 203076,  'James Harden',              'HOU'),
-('2018-19', 2544,    'LeBron James',              'LAL'),
-('2019-20', 203954,  'Giannis Antetokounmpo',     'MIL'),
-('2020-21', 203954,  'Giannis Antetokounmpo',     'MIL'),
-('2021-22', 203999,  'Nikola Jokic',              'DEN'),
-('2022-23', 203999,  'Nikola Jokic',              'DEN'),
-('2023-24', 1629029, 'Shai Gilgeous-Alexander',   'OKC'),
-('2024-25', 1629029, 'Shai Gilgeous-Alexander',   'OKC')
+INSERT INTO mvp_winners (season, player_id, player_name, team_id, team_abbr) VALUES
+('2015-16', 201939,  'Stephen Curry',            1610612744, 'GSW'),
+('2016-17', 201566,  'Russell Westbrook',         1610612760, 'OKC'),
+('2017-18', 201935,  'James Harden',              1610612745, 'HOU'),
+('2018-19', 203507,  'Giannis Antetokounmpo',     1610612749, 'MIL'),
+('2019-20', 203507,  'Giannis Antetokounmpo',     1610612749, 'MIL'),
+('2020-21', 203999,  'Nikola Jokic',              1610612743, 'DEN'),
+('2021-22', 203999,  'Nikola Jokic',              1610612743, 'DEN'),
+('2022-23', 203954,  'Joel Embiid',               1610612755, 'PHI'),
+('2023-24', 203999,  'Nikola Jokic',              1610612743, 'DEN'),
+('2024-25', 1628983, 'Shai Gilgeous-Alexander',   1610612760, 'OKC')
 ON CONFLICT (season) DO NOTHING;
 
 CREATE TABLE IF NOT EXISTS mvp_season_profiles (

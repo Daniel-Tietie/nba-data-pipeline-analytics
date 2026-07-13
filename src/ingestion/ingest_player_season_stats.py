@@ -4,19 +4,20 @@ Fetches per-game stats for all 10 MVP seasons from the NBA stats API.
 Also pulls team W/L for each season to support MVP profile analysis
 (team_wins, team_seed) without needing a separate standings table.
 
-Run this after the API block lifts (stats.nba.com blocked our IP on 2026-06-20
-from repeated requests — should clear within a few hours).
+Fetches through stats_client (curl_cffi) — stats.nba.com drops plain
+Python requests, which is what made earlier runs hang until timeout.
 """
 
 import logging
 import sys
-import time
 import math
 import psycopg2
 from psycopg2.extras import execute_values, Json
 import os
 from dotenv import load_dotenv
 from typing import List, Dict, Any
+
+from .stats_client import fetch_stats, league_dash_params
 
 load_dotenv()
 
@@ -32,19 +33,6 @@ MVP_SEASONS = [
     '2015-16', '2016-17', '2017-18', '2018-19', '2019-20',
     '2020-21', '2021-22', '2022-23', '2023-24', '2024-25'
 ]
-
-API_DELAY = 1.5
-
-
-def patch_nba_api_headers():
-    """Override nba_api's outdated Firefox 72 User-Agent with a modern Chrome one."""
-    from nba_api.stats.library import http as nba_http
-    nba_http.STATS_HEADERS.update({
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
-        'Referer': 'https://www.nba.com/',
-        'Origin': 'https://www.nba.com',
-    })
-    nba_http.NBAStatsHTTP.headers = nba_http.STATS_HEADERS
 
 
 def clean_value(val):
@@ -78,24 +66,13 @@ def fetch_player_stats_for_season(season: str) -> Dict[int, Dict]:
     Fetch per-game stats for all players in a season.
     Returns dict keyed by player_id.
     """
-    from nba_api.stats.endpoints import leaguedashplayerstats
-
     logger.info(f"Fetching player stats for {season} ...")
-    time.sleep(API_DELAY)
 
-    try:
-        result = leaguedashplayerstats.LeagueDashPlayerStats(
-            season=season,
-            season_type_all_star='Regular Season',
-            per_mode_detailed='PerGame',
-            timeout=60
-        )
-        df = result.get_data_frames()[0]
-    except Exception as e:
-        logger.error(f"Player stats API call failed for {season}: {e}")
-        return {}
-
-    if df.empty:
+    df = fetch_stats(
+        "leaguedashplayerstats",
+        league_dash_params(season, "Regular Season", "PerGame"),
+    )
+    if df is None or df.empty:
         logger.warning(f"Empty player stats response for {season}")
         return {}
 
@@ -127,24 +104,17 @@ def fetch_player_stats_for_season(season: str) -> Dict[int, Dict]:
 
 def fetch_team_wins_for_season(season: str) -> Dict[int, int]:
     """
-    Fetch team W totals for a season using LeagueDashTeamStats.
+    Fetch team W totals for a season using leaguedashteamstats.
     Returns dict keyed by team_id -> wins.
     """
-    from nba_api.stats.endpoints import leaguedashteamstats
-
     logger.info(f"Fetching team wins for {season} ...")
-    time.sleep(API_DELAY)
 
-    try:
-        result = leaguedashteamstats.LeagueDashTeamStats(
-            season=season,
-            season_type_all_star='Regular Season',
-            per_mode_detailed='Totals',
-            timeout=60
-        )
-        df = result.get_data_frames()[0]
-    except Exception as e:
-        logger.error(f"Team stats API call failed for {season}: {e}")
+    df = fetch_stats(
+        "leaguedashteamstats",
+        league_dash_params(season, "Regular Season", "Totals"),
+    )
+    if df is None or df.empty:
+        logger.error(f"Team stats fetch failed for {season}")
         return {}
 
     return {int(row['TEAM_ID']): int(row['W']) for _, row in df.iterrows() if row.get('W') is not None}
@@ -205,8 +175,6 @@ def run(seasons: List[str] = None) -> Dict[str, Any]:
     2. Fetch team wins (for MVP profile team_wins field)
     3. Store the MVP player's stats in raw_player_season_stats
     """
-    patch_nba_api_headers()
-
     seasons = seasons or MVP_SEASONS
     conn = get_db_conn()
     mvp_list = get_mvp_players(conn)
