@@ -29,6 +29,28 @@ HEADERS = {
 TIMEOUT = 30
 
 
+def _request(endpoint: str, params: Dict) -> Optional[Dict]:
+    """Retrying curl_cffi GET against a stats.nba.com endpoint. Returns the parsed JSON payload."""
+    url = f"{BASE_URL}/{endpoint}"
+
+    for attempt in range(MAX_RETRIES):
+        try:
+            time.sleep(API_DELAY_SECONDS)
+            resp = cffi_requests.get(
+                url, params=params, headers=HEADERS,
+                impersonate="chrome", timeout=TIMEOUT,
+            )
+            resp.raise_for_status()
+            return resp.json()
+        except Exception as e:
+            logger.warning(f"{endpoint} attempt {attempt + 1} failed: {e}")
+            if attempt < MAX_RETRIES - 1:
+                time.sleep(RETRY_DELAY * (attempt + 1))
+
+    logger.error(f"All attempts failed for {endpoint}")
+    return None
+
+
 def fetch_stats(endpoint: str, params: Dict, result_set: int = 0) -> Optional[pd.DataFrame]:
     """
     Fetch one stats.nba.com endpoint and return a result set as a DataFrame.
@@ -41,28 +63,25 @@ def fetch_stats(endpoint: str, params: Dict, result_set: int = 0) -> Optional[pd
     Returns:
         DataFrame built from headers + rowSet, or None if all retries fail
     """
-    url = f"{BASE_URL}/{endpoint}"
+    payload = _request(endpoint, params)
+    if payload is None:
+        return None
 
-    for attempt in range(MAX_RETRIES):
-        try:
-            time.sleep(API_DELAY_SECONDS)
-            resp = cffi_requests.get(
-                url, params=params, headers=HEADERS,
-                impersonate="chrome", timeout=TIMEOUT,
-            )
-            resp.raise_for_status()
-            payload = resp.json()
-            rs = payload["resultSets"][result_set]
-            df = pd.DataFrame(rs["rowSet"], columns=rs["headers"])
-            logger.debug(f"{endpoint}: {len(df)} rows")
-            return df
-        except Exception as e:
-            logger.warning(f"{endpoint} attempt {attempt + 1} failed: {e}")
-            if attempt < MAX_RETRIES - 1:
-                time.sleep(RETRY_DELAY * (attempt + 1))
+    rs = payload["resultSets"][result_set]
+    df = pd.DataFrame(rs["rowSet"], columns=rs["headers"])
+    logger.debug(f"{endpoint}: {len(df)} rows")
+    return df
 
-    logger.error(f"All attempts failed for {endpoint}")
-    return None
+
+def fetch_raw(endpoint: str, params: Dict) -> Optional[Dict]:
+    """
+    Fetch one stats.nba.com endpoint and return the raw resultSets payload.
+
+    For endpoints like leaguedashplayershotlocations, whose columns are
+    grouped under repeated headers (one FGM/FGA/FG_PCT triple per zone)
+    rather than the flat headers + rowSet shape fetch_stats expects.
+    """
+    return _request(endpoint, params)
 
 
 # Full parameter set stats.nba.com requires for the leaguedash* endpoints.
