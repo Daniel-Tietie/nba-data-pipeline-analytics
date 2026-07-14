@@ -147,6 +147,53 @@ the API by name at write time, not typed from memory.
 
 ---
 
+## Issue 4: leaguestandingsv3 conference_rank Doesn't Reflect Play-In Results
+
+**Discovered:** July 14, 2026
+**Severity:** Medium (wrong seed number shown for one team per conference in play-in seasons; did not affect win/loss results)
+
+### Problem Description
+
+`raw_season_standings.conference_rank` (sourced from the API's `PlayoffRank`
+field) is the team's rank by regular-season record. For seasons with a
+play-in tournament (2020-21 onward), that's not always the same as the
+seed the team actually entered the playoff bracket with: the 7-vs-8 play-in
+game winner takes the "7" bracket slot regardless of which team had the
+better regular-season record.
+
+**Example:** In 2022-23, Miami finished the regular season 44-38 (better
+than Atlanta's 41-41) and is stored with `conference_rank = 7`. But Atlanta
+beat Miami in the 7-vs-8 play-in game, so Atlanta took the 7 seed and played
+Boston (the 2-seed) in round 1, while Miami dropped to the 8 seed and played
+Milwaukee (the 1-seed) -- the team that then upset Milwaukee in 5 games.
+
+### Investigation
+
+Cross-checked `playoff_upsets`' round-1 pairings against `raw_playoff_games`
+directly: queried Boston's (2-seed) round-1 opponent and confirmed it was
+Atlanta, not Miami, which only makes sense if Atlanta held the 7 bracket
+slot and Miami the 8, opposite of their `conference_rank` values.
+
+### Resolution
+
+`build_playoff_upsets.py` doesn't read the opponent's seed from
+`raw_season_standings` at all. Round 1 in every one of these seasons is a
+standard 1-vs-8 bracket by construction, so the 1-seed's round-1 opponent's
+seed is hardcoded to 8 rather than looked up. This sidesteps the mislabeled
+field entirely rather than trying to correct it.
+
+**Impact:** Only affects the seed *number* displayed for the round-1
+opponent; the win/loss tally and upset boolean were always derived directly
+from game results and were never wrong.
+
+### Prevention
+
+Don't trust a "rank" field name at face value when a mid-season tournament
+can reorder it. Verify against ground-truth game data (who actually played
+whom) before using a standings field for bracket logic.
+
+---
+
 ## Data Quality Metrics (Post-Cleaning)
 
 | Metric | Value | Status |
@@ -179,4 +226,4 @@ the API by name at write time, not typed from memory.
 
 ---
 
-*Last Updated: July 13, 2026*
+*Last Updated: July 14, 2026*
