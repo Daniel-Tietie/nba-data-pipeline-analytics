@@ -74,11 +74,11 @@ For detailed data cleaning documentation, see [`docs/DATA_CLEANING.md`](docs/DAT
 - [x] Database schema design (layered raw → processed → analytics architecture)
 - [x] Historical game ingestion (3,691 games across 3 seasons)
 - [x] Schema pivot -- removed ML scope, added analytics tables and migration path
-- [ ] Ingestion scripts for standings, player season stats, shot zone splits
-- [ ] Analytics ETL for the three modules
-- [ ] Airflow DAG orchestration
+- [x] Ingestion scripts for standings, player season stats, shot zone splits, and playoff game logs
+- [x] Analytics ETL for the three modules
+- [x] Airflow DAG orchestration
 - [x] Streamlit dashboard (mock/draft build on sample data -- live pipeline integration pending)
-- [ ] Docker containerization
+- [x] Docker containerization
 - [ ] Personal stats module
 
 ## Local Development Setup
