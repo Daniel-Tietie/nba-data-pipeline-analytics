@@ -34,6 +34,10 @@ MVP_SEASONS = [
     '2020-21', '2021-22', '2022-23', '2023-24', '2024-25'
 ]
 
+# Rotation-level cutoff for league-average context stats. Averaging in deep
+# bench players would understate what "league average" means next to an MVP.
+MIN_MINUTES_FOR_LEAGUE_AVG = 20.0
+
 
 def clean_value(val):
     if isinstance(val, float) and (math.isnan(val) or math.isinf(val)):
@@ -61,21 +65,17 @@ def get_mvp_players(conn) -> List[Dict]:
         ]
 
 
-def fetch_player_stats_for_season(season: str) -> Dict[int, Dict]:
-    """
-    Fetch per-game stats for all players in a season.
-    Returns dict keyed by player_id.
-    """
+def fetch_league_player_df(season: str):
+    """Fetch the full per-game stats table for every player in a season."""
     logger.info(f"Fetching player stats for {season} ...")
-
-    df = fetch_stats(
+    return fetch_stats(
         "leaguedashplayerstats",
         league_dash_params(season, "Regular Season", "PerGame"),
     )
-    if df is None or df.empty:
-        logger.warning(f"Empty player stats response for {season}")
-        return {}
 
+
+def build_player_stats_dict(df) -> Dict[int, Dict]:
+    """Turn the full-league stats DataFrame into a dict keyed by player_id."""
     stats_by_player = {}
     for _, row in df.iterrows():
         player_id = int(row['PLAYER_ID'])
@@ -98,8 +98,67 @@ def fetch_player_stats_for_season(season: str) -> Dict[int, Dict]:
             'raw_data': raw
         }
 
-    logger.info(f"  -> {len(stats_by_player)} players fetched for {season}")
+    logger.info(f"  -> {len(stats_by_player)} players parsed")
     return stats_by_player
+
+
+def compute_league_averages(df, season: str) -> Dict[str, Any]:
+    """
+    Average per-game stats across rotation-level players (MIN >= threshold),
+    for the league-average context columns in mvp_season_profiles.
+    """
+    qualified = df[df['MIN'] >= MIN_MINUTES_FOR_LEAGUE_AVG]
+    if qualified.empty:
+        return {}
+
+    return {
+        'season': season,
+        'qualified_players': len(qualified),
+        'avg_pts': round(float(qualified['PTS'].mean()), 1),
+        'avg_reb': round(float(qualified['REB'].mean()), 1),
+        'avg_ast': round(float(qualified['AST'].mean()), 1),
+        'avg_fga': round(float(qualified['FGA'].mean()), 1),
+        'avg_fta': round(float(qualified['FTA'].mean()), 1),
+        'avg_fg_pct': round(float(qualified['FG_PCT'].mean()), 3),
+        'raw_data': {'min_minutes_threshold': MIN_MINUTES_FOR_LEAGUE_AVG},
+    }
+
+
+def insert_league_averages(records: List[Dict], conn) -> int:
+    """Upsert records into raw_league_season_averages."""
+    if not records:
+        return 0
+
+    query = """
+        INSERT INTO raw_league_season_averages (
+            season, qualified_players, avg_pts, avg_reb, avg_ast,
+            avg_fga, avg_fta, avg_fg_pct, raw_data
+        ) VALUES %s
+        ON CONFLICT (season) DO UPDATE SET
+            qualified_players = EXCLUDED.qualified_players,
+            avg_pts           = EXCLUDED.avg_pts,
+            avg_reb           = EXCLUDED.avg_reb,
+            avg_ast           = EXCLUDED.avg_ast,
+            avg_fga           = EXCLUDED.avg_fga,
+            avg_fta           = EXCLUDED.avg_fta,
+            avg_fg_pct        = EXCLUDED.avg_fg_pct,
+            raw_data          = EXCLUDED.raw_data,
+            ingested_at       = CURRENT_TIMESTAMP
+    """
+
+    values = [
+        (
+            r['season'], r['qualified_players'], r['avg_pts'], r['avg_reb'],
+            r['avg_ast'], r['avg_fga'], r['avg_fta'], r['avg_fg_pct'],
+            Json(r['raw_data'])
+        )
+        for r in records
+    ]
+
+    with conn.cursor() as cur:
+        execute_values(cur, query, values)
+    conn.commit()
+    return len(values)
 
 
 def fetch_team_wins_for_season(season: str) -> Dict[int, int]:
@@ -172,8 +231,9 @@ def run(seasons: List[str] = None) -> Dict[str, Any]:
     """
     Main entry point. For each MVP season:
     1. Fetch all player per-game stats
-    2. Fetch team wins (for MVP profile team_wins field)
-    3. Store the MVP player's stats in raw_player_season_stats
+    2. Store league-wide averages (rotation players) in raw_league_season_averages
+    3. Fetch team wins (for MVP profile team_wins field)
+    4. Store the MVP player's stats in raw_player_season_stats
     """
     seasons = seasons or MVP_SEASONS
     conn = get_db_conn()
@@ -192,12 +252,20 @@ def run(seasons: List[str] = None) -> Dict[str, Any]:
                 skipped.append(season)
                 continue
 
-            # Fetch player stats for the season
-            player_stats = fetch_player_stats_for_season(season)
-            if not player_stats:
+            # Fetch the full-league stats table once, use it for both the
+            # MVP row and the league-average context stats
+            league_df = fetch_league_player_df(season)
+            if league_df is None or league_df.empty:
+                logger.warning(f"Empty player stats response for {season}")
                 skipped.append(season)
                 results[season] = {'rows': 0, 'status': 'api_failed'}
                 continue
+
+            player_stats = build_player_stats_dict(league_df)
+
+            league_avg = compute_league_averages(league_df, season)
+            if league_avg:
+                insert_league_averages([league_avg], conn)
 
             # Fetch team wins
             team_wins = fetch_team_wins_for_season(season)

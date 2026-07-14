@@ -12,6 +12,7 @@ DROP TABLE IF EXISTS mvp_winners CASCADE;
 DROP TABLE IF EXISTS player_shooting_zones CASCADE;
 DROP TABLE IF EXISTS raw_shot_zone_splits CASCADE;
 DROP TABLE IF EXISTS raw_playoff_games CASCADE;
+DROP TABLE IF EXISTS raw_league_season_averages CASCADE;
 DROP TABLE IF EXISTS raw_player_season_stats CASCADE;
 DROP TABLE IF EXISTS raw_season_standings CASCADE;
 DROP TABLE IF EXISTS data_quality_checks CASCADE;
@@ -125,6 +126,20 @@ CREATE TABLE raw_player_season_stats (
 
 CREATE INDEX idx_raw_player_season_stats_player ON raw_player_season_stats(player_id);
 CREATE INDEX idx_raw_player_season_stats_season ON raw_player_season_stats(season);
+
+CREATE TABLE raw_league_season_averages (
+    id SERIAL PRIMARY KEY,
+    season VARCHAR(10) NOT NULL UNIQUE,
+    qualified_players INTEGER,
+    avg_pts DECIMAL(5,1),
+    avg_reb DECIMAL(5,1),
+    avg_ast DECIMAL(5,1),
+    avg_fga DECIMAL(5,1),
+    avg_fta DECIMAL(5,1),
+    avg_fg_pct DECIMAL(5,3),
+    raw_data JSONB,
+    ingested_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
 
 CREATE TABLE raw_shot_zone_splits (
     id SERIAL PRIMARY KEY,
@@ -240,6 +255,8 @@ CREATE TABLE player_shooting_zones (
     fgm INTEGER,
     fg_pct DECIMAL(5,3),
     zone_frequency DECIMAL(5,3),
+    league_fg_pct DECIMAL(5,3),
+    league_attempt_share DECIMAL(5,3),
     processed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     UNIQUE(player_id, season, zone)
 );
@@ -266,10 +283,16 @@ CREATE TABLE mvp_season_profiles (
     assists_per_game DECIMAL(5,1),
     fg_pct DECIMAL(5,3),
     three_pt_pct DECIMAL(5,3),
+    ts_pct DECIMAL(5,3),
     player_efficiency_rating DECIMAL(5,2),
     win_shares DECIMAL(6,2),
     team_wins INTEGER,
     team_seed INTEGER,
+    team_win_pct DECIMAL(5,3),
+    league_avg_pts DECIMAL(5,1),
+    league_avg_reb DECIMAL(5,1),
+    league_avg_ast DECIMAL(5,1),
+    league_avg_ts_pct DECIMAL(5,3),
     processed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     UNIQUE(season, player_id)
 );
