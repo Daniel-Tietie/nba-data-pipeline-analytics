@@ -1,0 +1,6 @@
+# Installed into the Airflow image on top of the base apache/airflow image.
+# Only what the DAG's task callables need to import src/ingestion and src/etl.
+psycopg2-binary==2.9.10
+python-dotenv==1.0.1
+pandas==2.2.3
+curl_cffi==0.7.4
