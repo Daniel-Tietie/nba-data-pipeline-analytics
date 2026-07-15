@@ -18,7 +18,7 @@ An end-to-end data engineering project that ingests NBA game and player data, pr
 This project answers three specific basketball questions using real NBA data rather than building generic predictive models:
 
 1. How does a player's shot distribution and efficiency vary across court zones, compared to other players?
-2. How often does the NBA's #1 seed get eliminated in the first round of the playoffs, and by whom?
+2. How often does the NBA's #1 seed fail to reach the conference finals, and by whom?
 3. What statistical profile tends to produce an MVP, across the last ten seasons?
 
 ## Data Flow
@@ -45,7 +45,7 @@ This project answers three specific basketball questions using real NBA data rat
 Compares shot distribution and efficiency across court zones (restricted area, paint, mid-range, corner three, above-the-break three) for any player and season -- for example, Stephen Curry's reliance on above-the-break threes versus drives to the basket, compared against other players.
 
 ### 2. Playoff Upset Tracking
-Identifies #1 seeds eliminated in the first round of the playoffs using historical seeding and series results, to see how often the league's best regular-season teams fail to convert in the postseason.
+Identifies #1 seeds that fail to reach the conference finals (a round-1 or round-2 exit) using historical seeding and series results, to see how often the league's best regular-season teams fall short in the postseason.
 
 ### 3. MVP Profile Analysis
 Tracks the statistical profile of MVP winners across the last ten seasons -- scoring, rebounding, assists, shooting efficiency, team win percentage -- to see what these players actually have in common.
