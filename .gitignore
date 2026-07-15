@@ -1,5 +1,4 @@
-# Local dev tooling config, not for repo
-.claude/
+
 
 # Python
 venv/
@@ -35,13 +34,16 @@ airflow-webserver.pid
 logs/
 standalone_admin_password.txt
 
+# Local dev tooling config, not for repo
+.claude/
+
 # Database
 *.db
 *.sqlite
 *.sqlite3
 pgdata/
 
-# Bundled analytics snapshot for the Streamlit Cloud deploy -- committed on purpose
+# Bundled analytics snapshot for the Streamlit Cloud 
 !data/analytics.db
 
 # Jupyter Notebooks
@@ -70,7 +72,7 @@ htmlcov/
 # Docker
 *.log
 
-# Data files (don't commit large datasets)
+# Data files 
 data/raw/
 data/processed/
 *.csv
@@ -87,7 +89,7 @@ models/*.joblib
 docs/_build/
 site/
 
-# Local project status (private, not for repo)
+# Local project status 
 PROJECT_STATUS.md
-# Local planning notes (not part of the deliverable)
+# Local planning notes 
 nba_completion_plan.md
