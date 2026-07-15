@@ -43,10 +43,11 @@ def get_db_conn():
 def fetch_raw_splits(conn) -> List[Dict[str, Any]]:
     with conn.cursor() as cur:
         cur.execute("""
-            SELECT player_id, player_name, season, zone, fga, fgm, fg_pct
+            SELECT player_id, player_name, season, zone, fga, fgm, fg_pct,
+                   (raw_data->'row'->2)::int AS team_id
             FROM raw_shot_zone_splits
         """)
-        cols = ['player_id', 'player_name', 'season', 'zone', 'fga', 'fgm', 'fg_pct']
+        cols = ['player_id', 'player_name', 'season', 'zone', 'fga', 'fgm', 'fg_pct', 'team_id']
         return [dict(zip(cols, row)) for row in cur.fetchall()]
 
 
@@ -94,7 +95,7 @@ def build() -> Dict[str, Any]:
             total_fga = player_total_fga[(r['player_id'], r['season'])]
             league = league_zone_stats.get((r['season'], r['zone']), {})
             records.append((
-                r['player_id'], r['player_name'], r['season'], r['zone'],
+                r['player_id'], r['player_name'], r['team_id'], r['season'], r['zone'],
                 r['fga'], r['fgm'], r['fg_pct'],
                 round(r['fga'] / total_fga, 3) if total_fga else None,
                 league.get('fg_pct'), league.get('attempt_share'),
@@ -104,7 +105,7 @@ def build() -> Dict[str, Any]:
             cur.execute("TRUNCATE TABLE player_shooting_zones")
             execute_values(cur, """
                 INSERT INTO player_shooting_zones (
-                    player_id, player_name, season, zone, fga, fgm, fg_pct,
+                    player_id, player_name, team_id, season, zone, fga, fgm, fg_pct,
                     zone_frequency, league_fg_pct, league_attempt_share
                 ) VALUES %s
             """, records)
@@ -125,7 +126,7 @@ def build() -> Dict[str, Any]:
 def run_quality_checks(conn, records: List[tuple]) -> None:
     total = len(records)
 
-    bad_pct = sum(1 for r in records if r[6] is not None and not (0 <= r[6] <= 1))
+    bad_pct = sum(1 for r in records if r[7] is not None and not (0 <= r[7] <= 1))
     log_check(
         conn, 'fg_pct_in_range', 'player_shooting_zones',
         passed=(bad_pct == 0), records_checked=total, records_failed=bad_pct,
@@ -133,7 +134,7 @@ def run_quality_checks(conn, records: List[tuple]) -> None:
         error_message=None if bad_pct == 0 else f"{bad_pct} rows with fg_pct outside [0,1]",
     )
 
-    null_keys = sum(1 for r in records if r[0] is None or r[2] is None or r[3] is None)
+    null_keys = sum(1 for r in records if r[0] is None or r[3] is None or r[4] is None)
     log_check(
         conn, 'key_columns_not_null', 'player_shooting_zones',
         passed=(null_keys == 0), records_checked=total, records_failed=null_keys,

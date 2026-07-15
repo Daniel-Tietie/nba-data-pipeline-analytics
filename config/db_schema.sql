@@ -249,6 +249,7 @@ CREATE TABLE player_shooting_zones (
     id SERIAL PRIMARY KEY,
     player_id INTEGER NOT NULL,
     player_name VARCHAR(100),
+    team_id INTEGER REFERENCES teams(team_id),
     season VARCHAR(10) NOT NULL,
     zone VARCHAR(50) NOT NULL,
     fga INTEGER,
