@@ -1,3 +1,6 @@
+# Claude Code local settings (personal permission allowlist, not for repo)
+.claude/settings.local.json
+
 # Python
 venv/
 env/
@@ -37,6 +40,9 @@ standalone_admin_password.txt
 *.sqlite
 *.sqlite3
 pgdata/
+
+# Bundled analytics snapshot for the Streamlit Cloud deploy -- committed on purpose
+!data/analytics.db
 
 # Jupyter Notebooks
 .ipynb_checkpoints/
