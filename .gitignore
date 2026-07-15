@@ -1,5 +1,5 @@
-# Claude Code local settings (personal permission allowlist, not for repo)
-.claude/settings.local.json
+# Local dev tooling config, not for repo
+.claude/
 
 # Python
 venv/
