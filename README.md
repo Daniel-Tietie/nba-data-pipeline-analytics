@@ -1,11 +1,10 @@
 # NBA Analytics Platform
 ------
-### Live demo (mock/draft build)
+### Live demo
 
 [https://daniel-tietie-nba-data-pipeline-analytics-dashboard.streamlit.app/](https://daniel-tietie-nba-data-pipeline-analytics-dashboard.streamlit.app/)
 
-
-**Note:** this is a mock/draft dashboard running on hand-crafted sample data, not the real pipeline data. Player headshots and team logos are real, but the surrounding stats are illustrative placeholders meant to preview the three analytics modules end to end. It will be updated on top of the live Airflow/Postgres pipeline once ingestion and analytics ETL are complete.
+Reads real data exported from the pipeline described below. Streamlit Community Cloud can't reach a local Postgres instance, so the deployed copy serves a SQLite snapshot instead of a live database connection -- see "Running the Pipeline" for how that's wired and how to update it.
 
 --------------------------------
 
@@ -52,11 +51,20 @@ Tracks the statistical profile of MVP winners across the last ten seasons -- sco
 
 A personal stats module is planned as a fourth addition once my own game data is digitized.
 
-### Screenshots (mock/draft build)
+### Screenshots
 
-![Player Shooting Zone Analysis](src/dashboard/screenshots/shooting_zones.png)
-![Playoff Upset Tracking](src/dashboard/screenshots/playoff_upset.png)
-![MVP Profile Analysis](src/dashboard/screenshots/mvp_profiles.png)
+**Player Shooting Zone Analysis** -- comparison mode, side-by-side courts, and shot selection quality
+![Shooting zone comparison](src/dashboard/screenshots/shooting_zones_comparison.png)
+![Shooting zone courts and head-to-head efficiency](src/dashboard/screenshots/shooting_zones_courts.png)
+![Shot selection quality and three-point rate trend](src/dashboard/screenshots/shooting_zones_quality.png)
+
+**Playoff Upset Tracking** -- season-by-season results and upset rate trends
+![Playoff upset overview](src/dashboard/screenshots/playoff_upsets_overview.png)
+![Playoff upset rate by conference and season](src/dashboard/screenshots/playoff_upsets_trends.png)
+
+**MVP Profile Analysis** -- radar comparison and full season table
+![MVP radar comparison](src/dashboard/screenshots/mvp_profiles_radar.png)
+![MVP season table and era trend](src/dashboard/screenshots/mvp_profiles_table.png)
 
 ## Data Quality & Cleaning
 
@@ -77,7 +85,7 @@ For detailed data cleaning documentation, see [`docs/DATA_CLEANING.md`](docs/DAT
 - [x] Ingestion scripts for standings, player season stats, shot zone splits, and playoff game logs
 - [x] Analytics ETL for the three modules
 - [x] Airflow DAG orchestration
-- [x] Streamlit dashboard (mock/draft build on sample data -- live pipeline integration pending)
+- [x] Streamlit dashboard reading real pipeline data, locally and deployed
 - [x] Docker containerization
 - [ ] Personal stats module
 
